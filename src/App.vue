@@ -112,6 +112,10 @@ async function clickRunNotebookButton() {
       The source code (<a target="_blank" href="https://github.com/zoan37/generative-agents-notebook-js">view on
         Github</a>) was largely ported from the Python notebook via GPT-4.
     </p>
+    <p>
+      Note: The dialogue betwen the two agents can be very short (e.g. two sentences) whereas in the local demo, there isn't this issue. This
+      could be that the web demo uses a mock embedding model and memory vector store instead of OpenAI embeddings and FAISS vector store, or due to some bugs.
+    </p>
 
     <div v-if="!state.isNotebookRunning">
       <button class="btn btn-primary btn-lg" @click="clickRunNotebookButton">Run Notebook</button>
