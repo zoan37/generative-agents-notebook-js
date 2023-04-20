@@ -1,6 +1,7 @@
 // Source: https://github.com/hwchase17/langchainjs/pull/685
 
 import type { IndexFlatL2 } from "faiss-node";
+
 import { Embeddings } from "langchain/embeddings";
 import { SaveableVectorStore } from "langchain/vectorstores/base";
 import { InMemoryDocstore, Document } from "langchain/docstore";
@@ -171,6 +172,7 @@ export class FaissStore extends SaveableVectorStore {
 
             return { IndexFlatL2 };
         } catch (err) {
+            console.error(err);
             throw new Error(
                 "Please install faiss-node as a dependency with, e.g. `npm install -S faiss-node`"
             );

@@ -2,8 +2,7 @@ import { TimeWeightedVectorStoreRetriever } from "./time_weighted_retriever";
 import { ChatOpenAI } from 'langchain/chat_models/openai'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
 import { InMemoryDocstore, Document } from "langchain/docstore";
-import { FaissStore } from "./faiss";
-import { GenerativeAgent } from './generative_agent'
+import { GenerativeAgent } from './generative_agent';
 import { BaseLanguageModel } from 'langchain/base_language';
 
 // TODO: use this function
@@ -14,33 +13,14 @@ function relevanceScoreFn(score: number): number {
     return 1.0 - score / Math.sqrt(2);
 }
 
-async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetriever> {
-    // Define your embedding model
-    const embeddingsModel = new OpenAIEmbeddings();
-    // Initialize the vectorstore as empty
-    const embeddingSize = 1536;
-
-    const { IndexFlatL2 } = await FaissStore.imports();
-    const index = new IndexFlatL2(embeddingSize);
-
-    // log('index.getDimension()', index.getDimension());
-
-    // TODO: the FaissStore implementation does not support injecting relevanceScoreFn yet
-    const vectorstore = new FaissStore(embeddingsModel, {
-        index: index,
-        docstore: new InMemoryDocstore()
-    });
-    return new TimeWeightedVectorStoreRetriever({ vectorstore: vectorstore, otherScoreKeys: ["importance"], k: 15 });
-}
-
-export async function runNotebook(config: { log: any; llm?: BaseLanguageModel }) {
+export async function runNotebook(config: { log: any; llm: BaseLanguageModel; createNewMemoryRetriever: () => Promise<TimeWeightedVectorStoreRetriever>; }) {
     const log = config.log || console.log;
 
     const USER_NAME = "Person A" // The name you want to use when interviewing the agent.
-    const LLM = config.llm ? config.llm : new ChatOpenAI({
-        maxTokens: 1500
-    });
-    
+
+    const LLM = config.llm;
+    const createNewMemoryRetriever = config.createNewMemoryRetriever;
+
     /** 
      * Start of notebook
      */
@@ -293,8 +273,3 @@ export async function runNotebook(config: { log: any; llm?: BaseLanguageModel })
      */
     log('\n\n\n--- End of notebook ---\n\n\n')
 }
-
-runNotebook({
-    log: console.log,
-    llm: undefined, // use default LLM
-});
