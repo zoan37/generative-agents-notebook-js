@@ -6,6 +6,7 @@ import { TimeWeightedVectorStoreRetriever } from "./time_weighted_retriever";
 // npm install @types/pydantic --save-dev
 // npm install @types/re --save-dev
 
+/*
 import { BaseModel, Field } from 'pydantic';
 import { colored } from 'termcolor';
 import { datetime, timedelta } from 'datetime';
@@ -24,16 +25,26 @@ import { FAISS } from './langchain/vectorstores';
 import { DateTime } from 'luxon';
 import { Document } from 'langchain/document';
 import { VectorStore } from 'langchain/vectorstores/base';
+*/
+
+
+import { LLMChain } from "langchain/chains";
+
+import { PromptTemplate } from 'langchain/prompts';
+
+import { BaseLanguageModel } from 'langchain/base_language';
+
+import { DateTime } from 'luxon';
+import { Document } from 'langchain/document';
 
 type List<T> = T[];
 type Optional<T> = T | null;
-type Tuple<T extends any[]> = T;
 
 interface GenerativeAgentConfig {
     arbitrary_types_allowed: boolean;
 }
 
-export class GenerativeAgent extends BaseModel {
+export class GenerativeAgent {
     name: string;
     age: number;
     traits: string;
@@ -53,6 +64,43 @@ export class GenerativeAgent extends BaseModel {
         arbitrary_types_allowed: true,
     };
 
+    /*
+        Constructor that is like this Python code:
+
+        GenerativeAgent(name="Tommie", 
+            age=25,
+            traits="anxious, likes design", # You can add more persistent traits here 
+            status="looking for a job", # When connected to a virtual world, we can have the characters update their status
+            memory_retriever=create_new_memory_retriever(),
+            llm=LLM,
+            daily_summaries = [
+                "Drove across state to move to a new town but doesn't have a job yet."
+            ],
+            reflection_threshold = 8, # we will give this a relatively low number to show how reflection works
+            )
+
+        but for TypeScript with kwargs.
+    */
+    constructor(kwargs: {
+        name: string,
+        age: number,
+        traits: string,
+        status: string,
+        memory_retriever: TimeWeightedVectorStoreRetriever,
+        llm: BaseLanguageModel,
+        daily_summaries?: List<string>,
+        reflection_threshold?: Optional<number>,
+    }) {
+        this.name = kwargs.name;
+        this.age = kwargs.age;
+        this.traits = kwargs.traits;
+        this.status = kwargs.status;
+        this.llm = kwargs.llm;
+        this.memory_retriever = kwargs.memory_retriever;
+        this.daily_summaries = kwargs.daily_summaries || [];
+        this.reflection_threshold = kwargs.reflection_threshold || null;
+    }
+
     /**
      * Parse a newline-separated string into a list of strings.
      */
@@ -62,20 +110,35 @@ export class GenerativeAgent extends BaseModel {
     }
 
     async _computeAgentSummary(): Promise<string> {
-        const prompt = PromptTemplate.fromTemplate(
+        const prompt1 = PromptTemplate.fromTemplate(
             "How would you summarize {name}'s core characteristics given the"
             + " following statements:\n"
             + "{related_memories}"
             + "Do not embellish."
             + "\n\nSummary: "
         );
+        const prompt = new PromptTemplate({ template: "How would you summarize {name}'s core characteristics given the"
+        + " following statements:\n"
+        + "{related_memories}"
+        + "Do not embellish."
+        + "\n\nSummary: ", inputVariables: ["name", "related_memories"] });
 
         // The agent seeks to think about their core characteristics.
         const relevantMemories: Document[] = this.fetchMemories(`${this.name}'s core characteristics`);
         const relevantMemoriesStr: string = relevantMemories.map(mem => mem.pageContent).join('\n');
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
 
-        return (await chain.run({ name: this.name, related_memories: relevantMemoriesStr })).trim();
+        console.log(this.name);
+        console.log(relevantMemoriesStr);
+
+        console.log('chain.call');
+        console.log({ name: this.name, related_memories: relevantMemoriesStr });
+
+        const value = await chain.call({ name: this.name, related_memories: relevantMemoriesStr });
+
+        console.log(value);
+
+        return value.text;
     }
 
     /**
@@ -272,13 +335,13 @@ export class GenerativeAgent extends BaseModel {
     /**
      * Reduce the number of tokens in the documents.
      */
-    _getMemoriesUntilLimit(consumed_tokens: number): string {
+    async _getMemoriesUntilLimit(consumed_tokens: number): Promise<string> {
         const result: string[] = [];
         for (const doc of this.memory_retriever.memory_stream.slice().reverse()) {
             if (consumed_tokens >= this.max_tokens_limit) {
                 break;
             }
-            consumed_tokens += this.llm.get_num_tokens(doc.pageContent);
+            consumed_tokens += await this.llm.getNumTokens(doc.pageContent);
             if (consumed_tokens < this.max_tokens_limit) {
                 result.push(doc.pageContent);
             }
@@ -311,7 +374,7 @@ export class GenerativeAgent extends BaseModel {
             observation: observation,
             agent_status: this.status
         };
-        const consumed_tokens = this.llm.get_num_tokens(prompt.format({ recent_observations: "", ...kwargs }));
+        const consumed_tokens = await this.llm.getNumTokens(await prompt.format({ recent_observations: "", ...kwargs }));
         kwargs["recent_observations"] = this._getMemoriesUntilLimit(consumed_tokens);
         const action_prediction_chain = new LLMChain({ llm: this.llm, prompt: prompt });
         const result = await action_prediction_chain.run(kwargs);

@@ -11,8 +11,10 @@
   "dependencies": {
     "@types/luxon": "^3.3.0",
     "deepcopy": "^2.1.0",
+    "faiss-node": "^0.1.1",
     "langchain": "^0.0.57",
     "luxon": "^3.3.0",
+    "openai": "^3.2.1",
     "vue": "^3.2.47"
   },
   "devDependencies": {

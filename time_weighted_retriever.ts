@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import * as deepcopy from 'deepcopy';
+import deepcopy from 'deepcopy';
 import { Document } from 'langchain/document';
 import { VectorStore } from 'langchain/vectorstores/base';
 
@@ -32,8 +32,15 @@ class TimeWeightedVectorStoreRetriever {
   // The salience to assign memories not retrieved from the vector store.
   default_salience: number | null = null;
 
-  constructor(vectorstore: VectorStore) {
-    this.vectorstore = vectorstore;
+  // Write a constructor of this form: new TimeWeightedVectorStoreRetriever({vectorstore: vectorstore, otherScoreKeys: ["importance"], k: 15});
+  constructor(kwargs: { vectorstore: VectorStore, otherScoreKeys?: string[], k?: number }) {
+    this.vectorstore = kwargs.vectorstore;
+    if (kwargs.otherScoreKeys) {
+      this.other_score_keys = kwargs.otherScoreKeys;
+    }
+    if (kwargs.k) {
+      this.k = kwargs.k;
+    }
   }
 
   /** 
@@ -76,6 +83,12 @@ class TimeWeightedVectorStoreRetriever {
    * Return documents that are relevant to the query.
    */
   getRelevantDocuments(query: string): Document[] {
+    console.log('this.memory_stream.length: ', this.memory_stream.length);
+    
+    if (this.memory_stream.length == 0) {
+      return [];
+    }
+
     const currentTime = DateTime.local();
     const docsAndScores: { [buffer_idx: number]: [Document, number | null] } = {};
     for (const doc of this.memory_stream.slice(-this.k)) {
