@@ -395,7 +395,7 @@ export class GenerativeAgent {
         if (result.includes("REACT:")) {
             // @ts-ignore
             const reaction = result.split("REACT:").pop().trim();
-            return [false, `${this.name} ${reaction}`];
+            return [false, `${this.name}: ${reaction}`];
         }
         if (result.includes("SAY:")) {
             // @ts-ignore

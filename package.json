@@ -16,7 +16,8 @@
     "luxon": "^3.3.0",
     "openai": "^3.2.1",
     "vue": "^3.2.47",
-    "window.ai": "^0.1.0"
+    "window.ai": "^0.1.0",
+    "xterm": "^5.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

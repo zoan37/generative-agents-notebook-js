@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { getWebConfig } from './web_config';
 import { runNotebook } from './notebook';
+import { reactive } from 'vue';
+import { Terminal } from 'xterm';
+
+const state = reactive({
+  isNotebookRunning: false
+});
 
 async function clickRunNotebookButton() {
   // TODO: Import window.ai npm package (currently it's causing issues with Vite, need to debug)
@@ -13,25 +19,86 @@ async function clickRunNotebookButton() {
 
   const webConfig = getWebConfig();
 
+  var term = new Terminal({
+    convertEol: true,
+    cols: 80,
+    rows: 30,
+  });
+
+  term.open(document.getElementById('terminal')!);
+
+  // override log function
+  webConfig.log = (a: any, b: any) => {
+    console.log(a, b);
+
+    // if a is a string, then it's a log message; if it's an object, then JSON stringify it
+    let logMessageA = a;
+    let logMessageB = b;
+
+    if (logMessageA != undefined) {
+      logMessageA = typeof a === "string" ? a : JSON.stringify(a);
+    }
+    if (logMessageB != undefined) {
+      logMessageA = typeof a === "string" ? a : JSON.stringify(a);
+    }
+
+    // append log messages to 'notebook_output' div
+    // const notebookOutputDiv = document.getElementById("notebook_output");
+    // if (notebookOutputDiv) {
+    let content = logMessageA;
+    if (logMessageB) {
+      content += " " + logMessageB;
+    }
+
+    // notebookOutputDiv.innerHTML += `${content}\n`;
+
+    term.write(`${content}\n`);
+    // }
+  };
+
+  state.isNotebookRunning = true;
+
   runNotebook(webConfig);
 }
 </script>
 
 <template>
-  <div class="container">
+  <div style="padding-left: 30px; padding-right: 30px;">
     <h1 class="mt-3">Generative Agents Notebook Demo</h1>
     <p>
-      This demo runs generative agents in your browser using <a target="_blank" href="https://windowai.io/">window.ai</a>.
+      This text-based demo runs generative agents in your browser using <a target="_blank"
+        href="https://windowai.io/">window.ai</a>.
       It executes a whole TypeScript "notebook" like the
-      <a target="_blank" href="https://python.langchain.com/en/latest/use_cases/agents/characters.html">Generative Agents in LangChain Python notebook</a>.
-      The source code (<a target="_blank" href="https://github.com/zoan37/generative-agents-notebook-js">view on Github</a>) was mainly ported from the Python notebook via GPT-4.
+      <a target="_blank" href="https://python.langchain.com/en/latest/use_cases/agents/characters.html">Generative
+        Agents
+        in LangChain Python notebook</a>.
+      The source code (<a target="_blank" href="https://github.com/zoan37/generative-agents-notebook-js">view on
+        Github</a>) was largely ported from the Python notebook via GPT-4.
     </p>
 
-    <div>
+    <div v-if="!state.isNotebookRunning">
       <button class="btn btn-primary btn-lg" @click="clickRunNotebookButton">Run Notebook</button>
+    </div>
+
+    <div v-show="state.isNotebookRunning" class="mb-3">
+      <div id="terminal_outer">
+        <div id="terminal"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+#notebook_output {
+  font-family: monospace;
+  white-space: pre;
+}
+
+#terminal_outer {
+  padding: 15px;
+  background-color: black;
+}
+
+#terminal {
+}
 </style>

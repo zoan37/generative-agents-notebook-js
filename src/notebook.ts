@@ -21,27 +21,29 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
     const LLM = config.llm;
     const createNewMemoryRetriever = config.createNewMemoryRetriever;
 
-    /** 
-     * Start of notebook
-     */
-    log('\n\n\n--- Start of notebook ---\n\n\n')
-
     function printTitle(title: string) {
-        log('\n\n\n');
-        log('='.repeat(title.length));
+        log('\n' + '='.repeat(title.length));
         log(title);
-        log('='.repeat(title.length));
-        log('\n\n\n');
+        log('='.repeat(title.length) + '\n');
     }
 
     async function printInterview(agent: GenerativeAgent, question: string) {
-        log('\n');
         log('QUESTION:');
         log(question);
         log('ANSWER:');
-        log(await interviewAgent(agent, question));
-        log('\n');
+
+        try {
+            log((await interviewAgent(agent, question))[1] + '\n');
+        } catch (err) {
+            console.error(err);
+        }
     }
+
+    /** 
+     * Start of notebook
+     */
+    log('--- Start of notebook ---\n')
+
     /**
      * Create a Generative Character
      */
@@ -62,7 +64,7 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
 
     // The current "Summary" of a character can't be made because the agent hasn't made
     // any observations yet.
-    log('\n\nSummary:')
+    log('\nSummary:')
     log(await tommie.getSummary());
 
     // We can give the character memories directly
@@ -83,7 +85,7 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
 
     // Now that Tommie has 'memories', their self-summary is more descriptive, though still rudimentary.
     // We will see how this summary updates after more observations to create a more rich description.
-    log('\n\nSummary:')
+    log('\nSummary:')
     log(await tommie.getSummary(true));
 
     /**
@@ -206,7 +208,7 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
         await eve.addMemory(memory);
     }
 
-    log('\n\nSummary:');
+    log('\nSummary:');
     log(await eve.getSummary());
 
     /**
@@ -257,10 +259,10 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
      */
     printTitle('Let’s interview our agents after their conversation')
 
-    log('\n\nSummary:')
+    log('\nSummary:')
     log(await tommie.getSummary(true));
 
-    log('\n\nSummary:')
+    log('\nSummary:')
     log(await eve.getSummary(true));
 
     await printInterview(tommie, "How was your conversation with Eve?");
@@ -271,5 +273,5 @@ export async function runNotebook(config: { log: any; llm: BaseLanguageModel; cr
     /** 
      * End of notebook
      */
-    log('\n\n\n--- End of notebook ---\n\n\n')
+    log('\n--- End of notebook ---')
 }
