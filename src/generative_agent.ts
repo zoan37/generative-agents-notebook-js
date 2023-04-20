@@ -1,39 +1,7 @@
 import { TimeWeightedVectorStoreRetriever } from "./time_weighted_retriever";
-
-// You will need to install the following dependencies:
-// npm install @types/termcolor --save-dev
-// npm install @types/datetime --save-dev
-// npm install @types/pydantic --save-dev
-// npm install @types/re --save-dev
-
-/*
-import { BaseModel, Field } from 'pydantic';
-import { colored } from 'termcolor';
-import { datetime, timedelta } from 'datetime';
-
 import { LLMChain } from "langchain/chains";
-
-import { ChatOpenAI } from './langchain/chat_models';
-import { InMemoryDocstore } from './langchain/docstore';
-import { OpenAIEmbeddings } from './langchain/embeddings';
-
 import { PromptTemplate } from 'langchain/prompts';
-
-import { BaseLanguageModel } from './langchain/schema';
-import { FAISS } from './langchain/vectorstores';
-
-import { DateTime } from 'luxon';
-import { Document } from 'langchain/document';
-import { VectorStore } from 'langchain/vectorstores/base';
-*/
-
-
-import { LLMChain } from "langchain/chains";
-
-import { PromptTemplate } from 'langchain/prompts';
-
 import { BaseLanguageModel } from 'langchain/base_language';
-
 import { DateTime } from 'luxon';
 import { Document } from 'langchain/document';
 
@@ -43,6 +11,10 @@ type Optional<T> = T | null;
 interface GenerativeAgentConfig {
     arbitrary_types_allowed: boolean;
 }
+
+// Note: In the Python notebook, chain.run() is used for everything.
+// But in TypeScript, it fails for many cases for some reason, so had to use
+// chain.call() instead.
 
 export class GenerativeAgent {
     name: string;
@@ -397,6 +369,7 @@ export class GenerativeAgent {
             agent_status: this.status
         };
         const consumed_tokens = await this.llm.getNumTokens(await prompt.format({ recent_observations: "", ...kwargs }));
+        // @ts-ignore
         kwargs["recent_observations"] = this._getMemoriesUntilLimit(consumed_tokens);
         const action_prediction_chain = new LLMChain({ llm: this.llm, prompt: prompt });
 
@@ -420,10 +393,12 @@ export class GenerativeAgent {
         const result = full_result.trim().split('\n')[0];
         this.addMemory(`${this.name} observed ${observation} and reacted by ${result}`);
         if (result.includes("REACT:")) {
+            // @ts-ignore
             const reaction = result.split("REACT:").pop().trim();
             return [false, `${this.name} ${reaction}`];
         }
         if (result.includes("SAY:")) {
+            // @ts-ignore
             const said_value = result.split("SAY:").pop().trim();
             return [true, `${this.name} said ${said_value}`];
         } else {
@@ -438,11 +413,13 @@ export class GenerativeAgent {
         const full_result = await this._generateReaction(observation, call_to_action_template);
         const result = full_result.trim().split('\n')[0];
         if (result.includes("GOODBYE:")) {
+            // @ts-ignore
             const farewell = result.split("GOODBYE:").pop().trim();
             this.addMemory(`${this.name} observed ${observation} and said ${farewell}`);
             return [false, `${this.name} said ${farewell}`];
         }
         if (result.includes("SAY:")) {
+            // @ts-ignore
             const response_text = result.split("SAY:").pop().trim();
             this.addMemory(`${this.name} observed ${observation} and said ${response_text}`);
             return [true, `${this.name} said ${response_text}`];

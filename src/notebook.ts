@@ -2,15 +2,9 @@ import { TimeWeightedVectorStoreRetriever } from "./time_weighted_retriever";
 import { ChatOpenAI } from 'langchain/chat_models/openai'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
 import { InMemoryDocstore, Document } from "langchain/docstore";
-// const { IndexFlatL2 } = require('faiss-node');
 import { FaissStore } from "./faiss";
-
 import { GenerativeAgent } from './generative_agent'
-
-const USER_NAME = "Person A" // The name you want to use when interviewing the agent.
-const LLM = new ChatOpenAI({
-    maxTokens: 1500
-}) // Can be any LLM you want.
+import { BaseLanguageModel } from 'langchain/base_language';
 
 // TODO: use this function
 function relevanceScoreFn(score: number): number {
@@ -29,8 +23,9 @@ async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetrie
     const { IndexFlatL2 } = await FaissStore.imports();
     const index = new IndexFlatL2(embeddingSize);
 
-    // console.log('index.getDimension()', index.getDimension());
+    // log('index.getDimension()', index.getDimension());
 
+    // TODO: the FaissStore implementation does not support injecting relevanceScoreFn yet
     const vectorstore = new FaissStore(embeddingsModel, {
         index: index,
         docstore: new InMemoryDocstore()
@@ -38,22 +33,34 @@ async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetrie
     return new TimeWeightedVectorStoreRetriever({ vectorstore: vectorstore, otherScoreKeys: ["importance"], k: 15 });
 }
 
-async function run() {
+export async function runNotebook(config: { log: any; llm?: BaseLanguageModel }) {
+    const log = config.log || console.log;
+
+    const USER_NAME = "Person A" // The name you want to use when interviewing the agent.
+    const LLM = config.llm ? config.llm : new ChatOpenAI({
+        maxTokens: 1500
+    });
+    
+    /** 
+     * Start of notebook
+     */
+    log('\n\n\n--- Start of notebook ---\n\n\n')
+
     function printTitle(title: string) {
-        console.log('\n\n\n');
-        console.log('='.repeat(title.length));
-        console.log(title);
-        console.log('='.repeat(title.length));
-        console.log('\n\n\n');
+        log('\n\n\n');
+        log('='.repeat(title.length));
+        log(title);
+        log('='.repeat(title.length));
+        log('\n\n\n');
     }
 
     async function printInterview(agent: GenerativeAgent, question: string) {
-        console.log('\n');
-        console.log('QUESTION:');
-        console.log(question);
-        console.log('ANSWER:');
-        console.log(await interviewAgent(agent, question));
-        console.log('\n');
+        log('\n');
+        log('QUESTION:');
+        log(question);
+        log('ANSWER:');
+        log(await interviewAgent(agent, question));
+        log('\n');
     }
     /**
      * Create a Generative Character
@@ -75,8 +82,8 @@ async function run() {
 
     // The current "Summary" of a character can't be made because the agent hasn't made
     // any observations yet.
-    console.log('\n\nSummary:')
-    console.log(await tommie.getSummary());
+    log('\n\nSummary:')
+    log(await tommie.getSummary());
 
     // We can give the character memories directly
     const tommieMemories: string[] = [
@@ -90,14 +97,14 @@ async function run() {
     ];
 
     for (const memory of tommieMemories) {
-        console.log('Adding memory:', memory);
+        log('Adding memory:', memory);
         await tommie.addMemory(memory);
     }
 
     // Now that Tommie has 'memories', their self-summary is more descriptive, though still rudimentary.
     // We will see how this summary updates after more observations to create a more rich description.
-    console.log('\n\nSummary:')
-    console.log(await tommie.getSummary(true));
+    log('\n\nSummary:')
+    log(await tommie.getSummary(true));
 
     /**
      * Pre-Interview with Character
@@ -159,16 +166,16 @@ async function run() {
         const [, reaction] = await tommie.generateReaction(observation);
 
         // Replace with your preferred method for colored console output if needed
-        console.log('OBSERVATION:');
-        console.log(observation);
-        console.log('REACTION:');
-        console.log(reaction);
+        log('OBSERVATION:');
+        log(observation);
+        log('REACTION:');
+        log(reaction);
 
         if ((i + 1) % 20 === 0) {
             const summary = await tommie.getSummary(true);
-            console.log('*'.repeat(40));
-            console.log(`After ${i + 1} observations, Tommie's summary is:\n${summary}`); // Replace with your preferred method for colored console output if needed
-            console.log('*'.repeat(40));
+            log('*'.repeat(40));
+            log(`After ${i + 1} observations, Tommie's summary is:\n${summary}`); // Replace with your preferred method for colored console output if needed
+            log('*'.repeat(40));
         }
     }
 
@@ -219,8 +226,8 @@ async function run() {
         await eve.addMemory(memory);
     }
 
-    console.log('\n\nSummary:');
-    console.log(await eve.getSummary());
+    log('\n\nSummary:');
+    log(await eve.getSummary());
 
     /**
      * Pre-conversation interviews
@@ -243,13 +250,13 @@ async function run() {
     async function runConversation(agents: GenerativeAgent[], initialObservation: string): Promise<void> {
         // Runs a conversation between agents
         let [, observation] = await agents[1].generateReaction(initialObservation);
-        console.log(observation);
+        log(observation);
         let turns = 0;
         while (true) {
             let breakDialogue = false;
             for (const agent of agents) {
                 const [stayInDialogue, newObservation] = await agent.generateDialogueResponse(observation);
-                console.log(newObservation);
+                log(newObservation);
                 observation = newObservation;
                 if (!stayInDialogue) {
                     breakDialogue = true;
@@ -270,11 +277,11 @@ async function run() {
      */
     printTitle('Let’s interview our agents after their conversation')
 
-    console.log('\n\nSummary:')
-    console.log(await tommie.getSummary(true));
+    log('\n\nSummary:')
+    log(await tommie.getSummary(true));
 
-    console.log('\n\nSummary:')
-    console.log(await eve.getSummary(true));
+    log('\n\nSummary:')
+    log(await eve.getSummary(true));
 
     await printInterview(tommie, "How was your conversation with Eve?");
     await printInterview(eve, "How was your conversation with Tommie?");
@@ -284,7 +291,10 @@ async function run() {
     /** 
      * End of notebook
      */
-    console.log('\n\n\n--- End of notebook ---\n\n\n')
+    log('\n\n\n--- End of notebook ---\n\n\n')
 }
 
-run();
+runNotebook({
+    log: console.log,
+    llm: undefined, // use default LLM
+});

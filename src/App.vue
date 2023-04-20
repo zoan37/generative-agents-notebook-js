@@ -1,8 +1,26 @@
 <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
+
+import { getWindowAI } from 'window.ai';
+
+import { WindowAILLM } from './window_ai_llm';
+
+import { runNotebook } from './notebook';
+
+async function clickRunNotebookButton() {
+  const ai = await getWindowAI();
+
+  runNotebook({
+    log: console.log, // TODO: write to html
+    llm: new WindowAILLM({})
+  });
+}
 </script>
 
 <template>
+  <div>
+    <button @click="clickRunNotebookButton">Run Notebook</button>
+  </div>
   <div>
     <a href="https://vitejs.dev" target="_blank">
       <img src="/vite.svg" class="logo" alt="Vite logo" />
@@ -11,7 +29,6 @@ import HelloWorld from './components/HelloWorld.vue'
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>

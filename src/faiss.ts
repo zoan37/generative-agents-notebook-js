@@ -2,7 +2,7 @@
 
 import type { IndexFlatL2 } from "faiss-node";
 import { Embeddings } from "langchain/embeddings";
-import { SaveableVectorStore } from "langchain/vectorstores";
+import { SaveableVectorStore } from "langchain/vectorstores/base";
 import { InMemoryDocstore, Document } from "langchain/docstore";
 
 export interface FaissLibArgs {
