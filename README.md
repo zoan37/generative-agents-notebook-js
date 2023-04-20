@@ -1,5 +1,7 @@
 # generative-agents-notebook-js
 
+**Web demo:** https://generative-agents-notebook-js.vercel.app/
+
 This package includes an experimental implementation and text-based "notebook" demos of generative agents in TypeScript. The motivation is to run generative agents on the web browser. The code is largely ported (via GPT-4) from the [Generative Agents in LangChain Python notebook](https://python.langchain.com/en/latest/use_cases/agents/characters.html), which is based on the [Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442) paper.
 
 The local demo runs generative agents with OpenAI embedding model and FAISS vector store.
