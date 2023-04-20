@@ -29,7 +29,7 @@ async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetrie
     const { IndexFlatL2 } = await FaissStore.imports();
     const index = new IndexFlatL2(embeddingSize);
 
-    console.log('index.getDimension()', index.getDimension());
+    // console.log('index.getDimension()', index.getDimension());
 
     const vectorstore = new FaissStore(embeddingsModel, {
         index: index,
@@ -39,9 +39,26 @@ async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetrie
 }
 
 async function run() {
+    function printTitle(title: string) {
+        console.log('\n\n\n');
+        console.log('='.repeat(title.length));
+        console.log(title);
+        console.log('='.repeat(title.length));
+        console.log('\n\n\n');
+    }
+
+    async function printInterview(agent: GenerativeAgent, question: string) {
+        console.log('\n');
+        console.log('QUESTION:');
+        console.log(question);
+        console.log('ANSWER:');
+        console.log(await interviewAgent(agent, question));
+        console.log('\n');
+    }
     /**
      * Create a Generative Character
      */
+    printTitle('Create a Generative Character')
 
     const tommie = new GenerativeAgent({
         name: "Tommie",
@@ -83,6 +100,7 @@ async function run() {
     /**
      * Pre-Interview with Character
      */
+    printTitle('Pre-Interview with Character')
 
     async function interviewAgent(agent: GenerativeAgent, message: string): Promise<[boolean, string]> {
         // Help the notebook user interact with the agent.
@@ -90,18 +108,16 @@ async function run() {
         return agent.generateDialogueResponse(newMessage);
     }
 
-    console.log('Interview agent result:');
-    console.log(await interviewAgent(tommie, "What do you like to do?"));
+    await printInterview(tommie, "What do you like to do?");
 
-    console.log('Interview agent result:');
-    console.log(await interviewAgent(tommie, "What are you looking forward to doing today?"));
+    await printInterview(tommie, "What are you looking forward to doing today?");
 
-    console.log('Interview agent result:');
-    console.log(await interviewAgent(tommie, "What are you most worried about today?"));
+    await printInterview(tommie, "What are you most worried about today?");
 
     /**
-     * Step through the day’s observations.
+     * Step through the day's observations.
      */
+    printTitle("Step through the day's observations")
 
     // Let's have Tommie start going through a day in the life.
     const observations: string[] = [
@@ -147,11 +163,74 @@ async function run() {
         console.log(reaction);
 
         if ((i + 1) % 20 === 0) {
+            const summary = await tommie.getSummary(true);
             console.log('*'.repeat(40));
-            console.log(`After ${i + 1} observations, Tommie's summary is:\n${tommie.getSummary(true)}`); // Replace with your preferred method for colored console output if needed
+            console.log(`After ${i + 1} observations, Tommie's summary is:\n${summary}`); // Replace with your preferred method for colored console output if needed
             console.log('*'.repeat(40));
         }
     }
+
+    /**
+     * Interview after the day
+     */
+    printTitle('Interview after the day')
+
+    await printInterview(tommie, "Tell me about how your day has been going");
+
+    await printInterview(tommie, "How do you feel about coffee?");
+
+    await printInterview(tommie, "Tell me about your childhood dog!");
+
+    /**
+     * Adding Multiple Characters
+     */
+    printTitle('Adding Multiple Characters')
+
+    const eve = new GenerativeAgent({
+        name: "Eve",
+        age: 34,
+        traits: "curious, helpful", // You can add more persistent traits here 
+        status: "N/A", // When connected to a virtual world, we can have the characters update their status
+        memory_retriever: await createNewMemoryRetriever(),
+        llm: LLM,
+        daily_summaries: [
+            "Eve started her new job as a career counselor last week and received her first assignment, a client named Tommie."
+        ],
+        reflection_threshold: 5,
+    });
+
+    // Note: yesterday is unused in the Python notebook for some reason; including code here anyway
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    const eveMemories = [
+        "Eve overhears her colleague say something about a new client being hard to work with",
+        "Eve wakes up and hear's the alarm",
+        "Eve eats a bowl of porridge",
+        "Eve helps a coworker on a task",
+        "Eve plays tennis with her friend Xu before going to work",
+        "Eve overhears her colleague say something about Tommie being hard to work with",
+    ];
+
+    for (const memory of eveMemories) {
+        await eve.addMemory(memory);
+    }
+
+    console.log(await eve.getSummary());
+
+    /**
+     * Pre-conversation interviews
+     */
+    printTitle('Pre-conversation interviews')
+
+    await printInterview(eve, "How are you feeling about today?");
+
+    await printInterview(eve, "What do you know about Tommie?");
+
+    await printInterview(eve, "Tommie is looking to find a job. What are are some things you'd like to ask him?");
+
+    await printInterview(eve, "You'll have to ask him. He may be a bit anxious, so I'd appreciate it if you keep the conversation going and ask as many questions as possible.");
 }
 
 run();

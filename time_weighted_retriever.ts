@@ -83,8 +83,9 @@ class TimeWeightedVectorStoreRetriever {
    * Return documents that are relevant to the query.
    */
   getRelevantDocuments(query: string): Document[] {
-    console.log('this.memory_stream.length: ', this.memory_stream.length);
-    
+    // console.log('this.memory_stream.length: ', this.memory_stream.length);
+
+    // Prevent error thrown when memory_stream is empty
     if (this.memory_stream.length == 0) {
       return [];
     }

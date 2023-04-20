@@ -128,15 +128,15 @@ export class GenerativeAgent {
         const relevantMemoriesStr: string = relevantMemories.map(mem => mem.pageContent).join('\n');
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
 
-        console.log(this.name);
-        console.log(relevantMemoriesStr);
+        // console.log(this.name);
+        // console.log(relevantMemoriesStr);
 
-        console.log('chain.call');
-        console.log({ name: this.name, related_memories: relevantMemoriesStr });
+        // console.log('chain.call');
+        // console.log({ name: this.name, related_memories: relevantMemoriesStr });
 
         const value = await chain.call({ name: this.name, related_memories: relevantMemoriesStr });
 
-        console.log(value);
+        // console.log(value);
 
         return value.text;
     }
@@ -157,8 +157,8 @@ export class GenerativeAgent {
         
         const result = await reflection_chain.call({ observations: observation_str });
 
-        console.log('_getTopicsOfReflection result:');
-        console.log(result);
+        // console.log('_getTopicsOfReflection result:');
+        // console.log(result);
         return this._parseList(result.text);
     }
 
@@ -178,8 +178,9 @@ export class GenerativeAgent {
         
         const result = await reflection_chain.call({ topic: topic, related_statements: related_statements });
 
-        console.log('_getInsightsOnTopic result:');
-        console.log(result);
+        // console.log('_getInsightsOnTopic result:');
+        // console.log(result);
+
         // TODO: Parse the connections between memories and insights
         return this._parseList(result.text);
     }
@@ -294,8 +295,8 @@ export class GenerativeAgent {
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
         
         const result = await chain.call({ observation: observation });
-        console.log('_getEntityFromObservation result:');
-        console.log(result);
+        // console.log('_getEntityFromObservation result:');
+        // console.log(result);
 
         return result.text.trim();
     }
@@ -308,8 +309,8 @@ export class GenerativeAgent {
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
 
         const result = await chain.call({ entity: entity_name, observation: observation });
-        console.log('_getEntityAction result:');
-        console.log(result);
+        // console.log('_getEntityAction result:');
+        // console.log(result);
 
         return result.text.trim();
     }
@@ -347,9 +348,9 @@ export class GenerativeAgent {
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
         
         const result = await chain.call({ q1: q1, context_str: context_str.trim() });
-        console.log('summarizeRelatedMemories result:');
-        console.log(result);
-        
+        // console.log('summarizeRelatedMemories result:');
+        // console.log(result);
+
         return result.text.trim();
     }
 
@@ -401,8 +402,8 @@ export class GenerativeAgent {
 
         const result = await action_prediction_chain.call(kwargs);
 
-        console.log('_generateReaction result:');
-        console.log(result);
+        // console.log('_generateReaction result:');
+        // console.log(result);
 
         return result.text.trim();
     }

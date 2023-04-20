@@ -81,9 +81,11 @@ export class FaissStore extends SaveableVectorStore {
         }
         if (k > this.index.ntotal()) {
             const total = this.index.ntotal();
+            /*
             console.warn(
                 `k (${k}) is greater than the number of elements in the index (${total}), setting k to ${total}`
             );
+            */
             // eslint-disable-next-line no-param-reassign
             k = total;
         }
