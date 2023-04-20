@@ -75,6 +75,7 @@ async function run() {
 
     // The current "Summary" of a character can't be made because the agent hasn't made
     // any observations yet.
+    console.log('\n\nSummary:')
     console.log(await tommie.getSummary());
 
     // We can give the character memories directly
@@ -95,6 +96,7 @@ async function run() {
 
     // Now that Tommie has 'memories', their self-summary is more descriptive, though still rudimentary.
     // We will see how this summary updates after more observations to create a more rich description.
+    console.log('\n\nSummary:')
     console.log(await tommie.getSummary(true));
 
     /**
@@ -217,6 +219,7 @@ async function run() {
         await eve.addMemory(memory);
     }
 
+    console.log('\n\nSummary:');
     console.log(await eve.getSummary());
 
     /**
@@ -231,6 +234,57 @@ async function run() {
     await printInterview(eve, "Tommie is looking to find a job. What are are some things you'd like to ask him?");
 
     await printInterview(eve, "You'll have to ask him. He may be a bit anxious, so I'd appreciate it if you keep the conversation going and ask as many questions as possible.");
+
+    /**
+     * Dialogue between Generative Agents
+     */
+    printTitle('Dialogue between Generative Agents')
+
+    async function runConversation(agents: GenerativeAgent[], initialObservation: string): Promise<void> {
+        // Runs a conversation between agents
+        let [, observation] = await agents[1].generateReaction(initialObservation);
+        console.log(observation);
+        let turns = 0;
+        while (true) {
+            let breakDialogue = false;
+            for (const agent of agents) {
+                const [stayInDialogue, newObservation] = await agent.generateDialogueResponse(observation);
+                console.log(newObservation);
+                observation = newObservation;
+                if (!stayInDialogue) {
+                    breakDialogue = true;
+                }
+            }
+            if (breakDialogue) {
+                break;
+            }
+            turns += 1;
+        }
+    }
+
+    const agents = [tommie, eve]; // Assuming you have the tommie and eve instances available
+    await runConversation(agents, "Tommie said: Hi, Eve. Thanks for agreeing to share your story with me and give me advice. I have a bunch of questions.");
+
+    /**
+     * Let’s interview our agents after their conversation
+     */
+    printTitle('Let’s interview our agents after their conversation')
+
+    console.log('\n\nSummary:')
+    console.log(await tommie.getSummary(true));
+
+    console.log('\n\nSummary:')
+    console.log(await eve.getSummary(true));
+
+    await printInterview(tommie, "How was your conversation with Eve?");
+    await printInterview(eve, "How was your conversation with Tommie?");
+    await printInterview(eve, "What do you wish you would have said to Tommie?");
+    await printInterview(tommie, "What happened with your coffee this morning?");
+
+    /** 
+     * End of notebook
+     */
+    console.log('\n\n\n--- End of notebook ---\n\n\n')
 }
 
 run();
