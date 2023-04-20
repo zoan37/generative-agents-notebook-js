@@ -6,11 +6,11 @@ This package includes an experimental implementation and text-based "notebook" d
 
 The local demo runs generative agents with OpenAI embedding model and FAISS vector store.
 
-The web demo runs generative agents with a mock embedding model and a memory vector store. It is powered by [window.ai](https://windowai.io/), which allows you to use your own AI models on the web. Mock embedding model was used because window.ai doesn't support embedding models yet (maybe could explore local embedding models also), and memory vector store was used because FAISS is difficult to build for the web (originally in C++) and haven't found a way yet. This can lead to the dialogue between the agents getting stuck in an infinite loop of saying goodbye.
+The web demo runs generative agents with a mock embedding model and a memory vector store. It is powered by [window.ai](https://windowai.io/), which allows you to use your own AI models on the web. Mock embedding model was used because window.ai doesn't support embedding models yet (maybe could explore local embedding models also), and memory vector store was used because FAISS is difficult to build for the web (originally in C++) and haven't found a way yet.
 
 Some differences between this TypeScript implementation and the Generative Agents in LangChain Python notebook:
 * The relevance score function is not used in the embedding model because the FAISS vector store implementation in TypeScript doesn't support it (the implementation comes from [this pull request](https://github.com/hwchase17/langchainjs/pull/685)).
-* Some `chain.run()` calls were failing so had to change to `chain.call()`.
+* Some `chain.run()` calls were throwing errors so had to change to `chain.call()`. Also, some `chan.run()` calls succeeded but were not injecting variables into the prompt correctly (e.g. injecting the string `[object Object]` instead of the stringified version), so used `chain.call()` instead.
 
 ### Run locally
 

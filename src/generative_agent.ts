@@ -189,8 +189,26 @@ export class GenerativeAgent {
             + "\nMemory: {memory_content}"
             + "\nRating: "
         );
+
+        // console.log('_scoreMemoryImportance:');
+        // console.log(memory_content);
+        // console.log(prompt);
+
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
-        const score = (await chain.run({ memory_content: memory_content })).trim();
+
+        // Note: Had to use chain.call() here instead of chain.run(). For some reason,
+        // chain.run() does not inject memory_content into the prompt correctly (instead
+        // "[object Object]" is injected).
+        const callValue = await chain.call({ memory_content: memory_content });
+
+        // console.log('callValue:');
+        // console.log(callValue);
+
+        const score = callValue.text.trim();
+
+        // console.log('score:');
+        // console.log(score);
+
         const match = score.match(/^\D*(\d+)/);
         if (match) {
             return (parseFloat(score[0]) / 10) * weight;
@@ -205,6 +223,9 @@ export class GenerativeAgent {
      * Add an observation or memory to the agent's memory.
      */
     async addMemory(memory_content: string): Promise<void> {
+        console.log('addMemory:');
+        console.log(memory_content);
+
         const importance_score = await this._scoreMemoryImportance(memory_content);
         this.memory_importance += importance_score;
         const document = new Document({ pageContent: memory_content, metadata: { importance: importance_score } });
@@ -357,8 +378,8 @@ export class GenerativeAgent {
             + "\nObservation: {observation}"
             + "\n\n" + suffix
         );
-        const agent_summary_description = this.getSummary();
-        const relevant_memories_str = this.summarizeRelatedMemories(observation);
+        const agent_summary_description = await this.getSummary();
+        const relevant_memories_str = await this.summarizeRelatedMemories(observation);
         const current_time_str = new Date().toLocaleString("en-US", { month: "long", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
         const kwargs = {
             agent_summary_description: agent_summary_description,
@@ -370,12 +391,15 @@ export class GenerativeAgent {
         };
         const consumed_tokens = await this.llm.getNumTokens(await prompt.format({ recent_observations: "", ...kwargs }));
         // @ts-ignore
-        kwargs["recent_observations"] = this._getMemoriesUntilLimit(consumed_tokens);
+        kwargs["recent_observations"] = await this._getMemoriesUntilLimit(consumed_tokens);
         const action_prediction_chain = new LLMChain({ llm: this.llm, prompt: prompt });
+
+        // console.log('_generateReaction kwargs:');
+        // console.log(kwargs);
 
         const result = await action_prediction_chain.call(kwargs);
 
-        // console.log('_generateReaction result:');
+        // console.log('_generateReaction call result:');
         // console.log(result);
 
         return result.text.trim();

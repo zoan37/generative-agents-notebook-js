@@ -103,7 +103,7 @@ async function clickRunNotebookButton() {
   <div style="padding-left: 30px; padding-right: 30px;">
     <h1 class="mt-3">Generative Agents Notebook Demo</h1>
     <p>
-      This text-based demo (relatively incomplete, see note) runs generative agents in your browser using <a target="_blank"
+      This text-based demo runs generative agents in your browser using <a target="_blank"
         href="https://windowai.io/">window.ai</a>.
       It executes a whole TypeScript "notebook" like the
       <a target="_blank" href="https://python.langchain.com/en/latest/use_cases/agents/characters.html">Generative
@@ -111,11 +111,6 @@ async function clickRunNotebookButton() {
         in LangChain Python notebook</a>.
       The source code (<a target="_blank" href="https://github.com/zoan37/generative-agents-notebook-js">view on
         Github</a>) was largely ported from the Python notebook via GPT-4.
-    </p>
-    <p>
-      Note: In the "Dialogue between Generative Agents" section, the agents could get stuck in an infinite loop of saying goodbye.
-      This could be because the web app uses a mock embedding model, and a memory vector store (the local script version
-      doesn't have this issue, and it uses OpenAI embedding model and FAISS vector store).
     </p>
 
     <div v-if="!state.isNotebookRunning">
