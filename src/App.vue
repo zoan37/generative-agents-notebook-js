@@ -2,7 +2,6 @@
 import { getWebConfig } from './web_config';
 import { runNotebook } from './notebook';
 import { reactive } from 'vue';
-import { Terminal } from 'xterm';
 
 const state = reactive({
   isNotebookRunning: false
@@ -116,7 +115,7 @@ async function clickRunNotebookButton() {
     <p>
       Note: In the "Dialogue between Generative Agents" section, the agents could get stuck in an infinite loop of saying goodbye.
       This could be because the web app uses a mock embedding model, and a memory vector store (the local script version
-      doesn't have this issue, and it uses OpenAI embedding model and FASS vector store).
+      doesn't have this issue, and it uses OpenAI embedding model and FAISS vector store).
     </p>
 
     <div v-if="!state.isNotebookRunning">
