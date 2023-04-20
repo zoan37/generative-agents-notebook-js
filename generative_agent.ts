@@ -154,9 +154,12 @@ export class GenerativeAgent {
         const reflection_chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
         const observations = this.memory_retriever.memory_stream.slice(-last_k);
         const observation_str = observations.map(o => o.pageContent).join('\n');
-        const result = await reflection_chain.run({ observations: observation_str });
+        
+        const result = await reflection_chain.call({ observations: observation_str });
 
-        return this._parseList(result);
+        console.log('_getTopicsOfReflection result:');
+        console.log(result);
+        return this._parseList(result.text);
     }
 
     /**
@@ -172,10 +175,13 @@ export class GenerativeAgent {
         const related_memories = this.fetchMemories(topic);
         const related_statements = related_memories.map((memory, i) => `${i + 1}. ${memory.pageContent}`).join('\n');
         const reflection_chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
-        const result = await reflection_chain.run({ topic: topic, related_statements: related_statements });
+        
+        const result = await reflection_chain.call({ topic: topic, related_statements: related_statements });
 
+        console.log('_getInsightsOnTopic result:');
+        console.log(result);
         // TODO: Parse the connections between memories and insights
-        return this._parseList(result);
+        return this._parseList(result.text);
     }
 
     /**
@@ -239,7 +245,7 @@ export class GenerativeAgent {
             && this.status !== "Reflecting") {
             const old_status = this.status;
             this.status = "Reflecting";
-            this.pauseToReflect();
+            await this.pauseToReflect();
             // Hack to clear the importance from reflection
             this.memory_importance = 0.0;
             this.status = old_status;
@@ -286,7 +292,12 @@ export class GenerativeAgent {
             + "\nEntity="
         );
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
-        return (await chain.run({ observation: observation })).trim();
+        
+        const result = await chain.call({ observation: observation });
+        console.log('_getEntityFromObservation result:');
+        console.log(result);
+
+        return result.text.trim();
     }
 
     async _getEntityAction(observation: string, entity_name: string): Promise<string> {
@@ -295,7 +306,12 @@ export class GenerativeAgent {
             + "\nThe {entity} is"
         );
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
-        return (await chain.run({ entity: entity_name, observation: observation })).trim();
+
+        const result = await chain.call({ entity: entity_name, observation: observation });
+        console.log('_getEntityAction result:');
+        console.log(result);
+
+        return result.text.trim();
     }
 
     async _formatMemoriesToSummarize(relevant_memories: Document[]): Promise<string> {
@@ -329,7 +345,12 @@ export class GenerativeAgent {
             "{q1}?\nContext from memory:\n{context_str}\nRelevant context: "
         );
         const chain = new LLMChain({ llm: this.llm, prompt: prompt, verbose: this.verbose });
-        return (await chain.run({ q1: q1, context_str: context_str.trim() })).trim();
+        
+        const result = await chain.call({ q1: q1, context_str: context_str.trim() });
+        console.log('summarizeRelatedMemories result:');
+        console.log(result);
+        
+        return result.text.trim();
     }
 
     /**
@@ -377,8 +398,13 @@ export class GenerativeAgent {
         const consumed_tokens = await this.llm.getNumTokens(await prompt.format({ recent_observations: "", ...kwargs }));
         kwargs["recent_observations"] = this._getMemoriesUntilLimit(consumed_tokens);
         const action_prediction_chain = new LLMChain({ llm: this.llm, prompt: prompt });
-        const result = await action_prediction_chain.run(kwargs);
-        return result.trim();
+
+        const result = await action_prediction_chain.call(kwargs);
+
+        console.log('_generateReaction result:');
+        console.log(result);
+
+        return result.text.trim();
     }
 
     async generateReaction(observation: string): Promise<[boolean, string]> {

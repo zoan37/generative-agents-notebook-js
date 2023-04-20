@@ -39,6 +39,10 @@ async function createNewMemoryRetriever(): Promise<TimeWeightedVectorStoreRetrie
 }
 
 async function run() {
+    /**
+     * Create a Generative Character
+     */
+
     const tommie = new GenerativeAgent({
         name: "Tommie",
         age: 25,
@@ -75,6 +79,25 @@ async function run() {
     // Now that Tommie has 'memories', their self-summary is more descriptive, though still rudimentary.
     // We will see how this summary updates after more observations to create a more rich description.
     console.log(await tommie.getSummary(true));
+
+    /**
+     * Pre-Interview with Character
+     */
+
+    async function interviewAgent(agent: GenerativeAgent, message: string): Promise<[boolean, string]> {
+        // Help the notebook user interact with the agent.
+        const newMessage = `${USER_NAME} says ${message}`;
+        return agent.generateDialogueResponse(newMessage);
+    }
+    
+    console.log('Interview agent result:');
+    console.log(await interviewAgent(tommie, "What do you like to do?"));
+    
+    console.log('Interview agent result:');
+    console.log(await interviewAgent(tommie, "What are you looking forward to doing today?"));
+    
+    console.log('Interview agent result:');
+    console.log(await interviewAgent(tommie, "What are you most worried about today?"));
 }
 
 run();
